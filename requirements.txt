@@ -1,0 +1,5 @@
+langchain
+langgraph
+playwright
+beautifulsoup4
+pypdf
