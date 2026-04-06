@@ -4,7 +4,7 @@ Splits large document text into smaller overlapping segments
 that fit within embedding model context windows.
 """
 
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from config.settings import CHUNK_SIZE, CHUNK_OVERLAP
 
 
