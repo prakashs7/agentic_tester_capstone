@@ -1,81 +1,72 @@
+"""
+Agentic AI Tester — Capstone Project
+======================================
+CLI entry point that drives the multi-agent LangGraph pipeline.
+
+Usage:
+    python main.py                              # default SRS + URL
+    python main.py --pdf specs/Other.pdf        # different SRS
+    python main.py --url https://example.com/   # different target
+"""
+
+import argparse
 import os
-from dotenv import load_dotenv
-from langgraph.graph import StateGraph, END
-from typing import TypedDict, List
+import sys
 
-# Import your independent agents
-from extractor_agent import RequirementExtractor
-from generator_agent import CodeGenerator
-from auditor_agent import QualityAuditor
+from config.settings import DEFAULT_TARGET_URL, SPECS_DIR
+from orchestrator.workflow import run_pipeline
 
-# Load API Key from .env
-load_dotenv()
 
-# 1. Initialize Google Gemini Model
-from langchain_groq import ChatGroq
+def main():
+    ap = argparse.ArgumentParser(
+        description="Agentic AI Tester — multi-agent Playwright test generation pipeline",
+    )
+    ap.add_argument(
+        "--pdf",
+        default=os.path.join(SPECS_DIR, "SpecificationDoc.pdf"),
+        help="Path to the SRS PDF document (default: specs/SpecificationDoc.pdf)",
+    )
+    ap.add_argument(
+        "--url",
+        default=DEFAULT_TARGET_URL,
+        help="Target URL the tests will run against",
+    )
+    args = ap.parse_args()
 
-# Initialize an open-source model (Llama 3 is highly recommended for coding)
-llm = ChatGroq(
-    temperature=0, 
-    model_name="openai/gpt-oss-120b",
-    groq_api_key=os.getenv("GROQ_API_KEY")
-)
-# 2. Setup Independent Agents
-extractor = RequirementExtractor(llm) # Agent A
-generator = CodeGenerator(llm)       # Agent B
-auditor = QualityAuditor(llm)         # Agent C
+    # ── validate inputs ──────────────────────────────────────
+    if not os.path.exists(args.pdf):
+        print(f"  ERROR: PDF not found at '{args.pdf}'")
+        sys.exit(1)
 
-# 3. Define State and Workflow
-class AgentState(TypedDict):
-    requirements: List[str]
-    code: str
-    report: str
-    iterations: int
+    # ── banner ───────────────────────────────────────────────
+    print()
+    print("=" * 60)
+    print("   AGENTIC AI TESTER  —  Capstone Pipeline")
+    print("=" * 60)
+    print(f"   PDF  :  {args.pdf}")
+    print(f"   URL  :  {args.url}")
+    print("=" * 60)
 
-workflow = StateGraph(AgentState)
+    # ── run ──────────────────────────────────────────────────
+    result = run_pipeline(args.pdf, args.url)
 
-# Agent B Logic (Generator)
-workflow.add_node("Generator", lambda state: {
-    "code": generator.generate(state['requirements'], state.get('report')),
-    "iterations": state.get('iterations', 0) + 1
-})
+    # ── final summary ────────────────────────────────────────
+    iterations = result.get("iteration", 0)
+    report = result.get("audit_report", {})
+    verdict = report.get("verdict", "UNKNOWN")
+    coverage = report.get("coverage_pct", "?")
 
-# Agent C Logic (Auditor)
-workflow.add_node("Auditor", lambda state: {
-    "report": auditor.verify(state['code'], state['requirements'])
-})
+    print()
+    print("=" * 60)
+    print("   PIPELINE COMPLETE")
+    print("=" * 60)
+    print(f"   Iterations :  {iterations}")
+    print(f"   Verdict    :  {verdict}")
+    print(f"   Coverage   :  {coverage}%")
+    print(f"   Output     :  output/generated_tests.py")
+    print("=" * 60)
+    print()
 
-# Loop Logic: Max 5 attempts 
-def check_completion(state):
-    if "CONFIRMED" in state['report'] or state['iterations'] >= 5:
-        return END
-    return "Generator"
 
-workflow.set_entry_point("Generator")
-workflow.add_edge("Generator", "Auditor")
-workflow.add_conditional_edges("Auditor", check_completion)
-
-app = workflow.compile()
-
-# 4. Run Execution
 if __name__ == "__main__":
-    pdf_path = "SpecificationDoc.pdf"
-    
-    print("--- Phase 1: Agent A Extracting from PDF ---")
-    extracted_data = extractor.run(pdf_path) 
-    
-    initial_input = {
-        "requirements": extracted_data,
-        "iterations": 0
-    }
-    
-    print("--- Phase 2: Agent B & C Feedback Loop ---")
-    result = app.invoke(initial_input)
-    
-    print(f"\nCompleted in {result['iterations']} iterations.")
-    print("Final Code Generated in: playwright_test.py")
-    
-    with open("playwright_test.py", "w", encoding="utf-8") as f:
-        code_content = result['code'].content if hasattr(result['code'], 'content') else result['code']
-        clean_code = code_content.replace('“', '"').replace('”', '"').replace('‘', "'").replace('’', "'")
-        f.write(clean_code)
+    main()
