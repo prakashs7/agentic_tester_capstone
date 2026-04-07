@@ -61,17 +61,18 @@ STRICT RULES — follow every single one:
    where req_id is lowercased and hyphens become underscores.
    Example: def test_fr_cb_01(page):
 4. Put a comment  # TEST: <REQ_ID>  as the first line inside each function.
-5. Use correct CSS selectors / locators that match the real site.
+5. Use correct CSS selectors. NEVER use jQuery pseudo-selectors like :first or :last in strings. Use .first, .last, or .nth() instead (e.g., page.locator('input').first).
 6. Include at least one expect() assertion per function.
 7. For JS alerts use  page.on("dialog", lambda d: d.accept())  BEFORE the click.
-8. For file upload create a temp file with Path, upload it, then delete it.
-9. For checkbox assertions use expect(cb).to_be_checked() or .not_to_be_checked().
-10. Write a  run_all()  function that launches the browser, creates a page,
+8. For file upload create a temp file with Path, upload it, then delete it. Use the specific locator '#file-upload' to avoid strict mode violations.
+9. For checkbox assertions use expect(cb).to_be_checked() or .not_to_be_checked(). To count elements, use expect(page.locator("...")).to_have_count(N) (NEVER pass lists to expect). Do NOT assert text labels using to_have_attribute() on input tags. Note: Checkbox 2 is checked by default!
+10. For URL assertions, use `assert "..." in page.url` because page.url is a string property, NEVER a function (do not use page.url()).
+11. Write a  run_all()  function that launches the browser, creates a page,
     calls every test_* function in sequence, and closes the browser in a
     finally block.
-11. End with:  if __name__ == "__main__": run_all()
-12. Output ONLY raw Python code.  NO markdown fences, NO explanations.
-13. NEVER use Flask.  NEVER build a web server.
+12. End with:  if __name__ == "__main__": run_all()
+13. Output ONLY raw Python code.  NO markdown fences, NO explanations.
+14. NEVER use Flask.  NEVER build a web server.
 
 Write the complete, executable test script now:"""
 
@@ -108,9 +109,10 @@ RULES:
 1. Write ONLY the replacement test functions — nothing else.
 2. Keep the naming convention:  def test_<req_id>(page):
 3. Keep the comment  # TEST: <REQ_ID>  as the first line.
-4. Use correct locators that match the real site elements.
-5. Include expect() assertions.
-6. Output ONLY raw Python code — NO markdown fences.
+4. Use correct locators (e.g., use '#file-upload' for file inputs). NEVER use jQuery pseudo-selectors like :first or :last in strings. Use .first, .last, or .nth() instead.
+5. Include expect() assertions. Use expect(page.locator("...")).to_have_count(N) for counts. NEVER pass lists to expect. Do NOT assert text labels using to_have_attribute() on input tags. Note: Checkbox 2 is checked by default!
+6. For URL assertions, use `assert "..." in page.url` because page.url is a string property, NEVER a function (do not use page.url()).
+7. Output ONLY raw Python code — NO markdown fences.
 
 Write the fixed test functions now:"""
 
