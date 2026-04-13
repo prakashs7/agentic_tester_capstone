@@ -8,7 +8,7 @@ class CodeGenerator:
         Ensures NO conversational text or markdown is included.
         """
         
-        # This instruction is the 'Brain' that fixes the ModuleNotFoundError
+     
         system_instruction = (
             "You are a Playwright Automation Expert. "
             "CRITICAL: Always start your code with 'from playwright.sync_api import sync_playwright'. "
@@ -24,21 +24,21 @@ class CodeGenerator:
         )
 
         if feedback:
-            # Per requirement 5, only update the specific failing parts 
+          
             user_prompt = (
                 f"UPDATE the existing code based on this feedback: {feedback}. "
                 f"Requirements: {requirements}"
             )
         else:
-            # Focus on executable scripts and matching UI locators
+          
             user_prompt = (
                 f"Generate a standalone Playwright Python script for: {requirements}. "
                 f"Target URL: https://the-internet.herokuapp.com/."
             )
 
-        # Combine instructions to force code-only output
+      
         full_prompt = f"{system_instruction}\n\n{user_prompt}"
         
-        # We extract .content here to ensure main.py gets a clean string
+      
         response = self.model.invoke(full_prompt)
         return response.content if hasattr(response, 'content') else response
