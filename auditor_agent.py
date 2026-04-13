@@ -8,7 +8,7 @@ class QualityAuditor:
         Ensures the code is strictly Playwright and matches the URL.
         """
         
-        # We give the Auditor a strict set of rules to check against
+      
         audit_prompt = (
             f"Act as a Senior QA Auditor. Examine this code based on these requirements: {requirements}.\n\n"
             f"CODE TO AUDIT:\n{code}\n\n"
@@ -21,8 +21,8 @@ class QualityAuditor:
             "If there are errors, start with 'FAIL' and list the specific issues for the Generator to fix."
         )
 
-        # The Auditor invokes the model to get the report
+      
         response = self.model.invoke(audit_prompt)
         
-        # Ensure we return the text content of the audit
+      
         return response.content if hasattr(response, 'content') else response
